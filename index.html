@@ -1118,3 +1118,19 @@ async function handleFormSubmit(event, type){
   function setLang(lang){
     document.documentElement.setAttribute('lang', lang);
     document.documentElement.setAttribute('data-lang', lang);
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      const dict = I18N[lang] || {};
+      if(dict[key]) el.textContent = dict[key];
+    });
+    document.querySelectorAll('[data-lang-btn]').forEach(b => b.classList.toggle('active', b.dataset.langBtn === lang));
+    try{ localStorage.setItem('aidytag_lang', lang); }catch(e){}
+  }
+  document.querySelectorAll('[data-lang-btn]').forEach(b => {
+    b.addEventListener('click', (ev) => { ev.preventDefault(); setLang(b.dataset.langBtn); });
+  });
+  setLang('fr');
+})();
+</script>
+</body>
+</html>
