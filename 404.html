@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Page introuvable — AidyTag</title>
+<style>
+  :root{
+    --navy: #1F3864;
+    --navy-deep: #162846;
+    --green-dark: #1F7A4D;
+    --green-light: #3DC070;
+    --white: #FFFFFF;
+    --gray-light: #C9D2E5;
+  }
+  *{ box-sizing: border-box; margin:0; padding:0; }
+  html, body{ height:100%; }
+  body{
+    font-family: Georgia, 'Times New Roman', serif;
+    background: var(--navy);
+    color: var(--white);
+    min-height: 100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position: relative;
+    overflow:hidden;
+    text-align:center;
+    padding: 6vw;
+  }
+  body::before{
+    content:"";
+    position: fixed;
+    top: -200px; right: -200px;
+    width: 700px; height: 700px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.03);
+  }
+  body::after{
+    content:"";
+    position: fixed;
+    bottom: -250px; left: -150px;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: rgba(61,192,112,0.06);
+  }
+  .box{ position:relative; z-index:2; max-width:480px; }
+  .logo{ display:inline-flex; align-items:center; gap:14px; text-decoration:none; margin-bottom:44px; }
+  .logo-icon{
+    width: 44px; height: 44px; border-radius: 12px;
+    background: var(--green-dark);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .logo-icon svg{ width: 24px; height: 24px; }
+  .logo-text{ font-size: 1.5rem; font-weight: 700; color: var(--white); }
+  .logo-text span{ color: var(--green-light); }
+
+  .code{
+    font-family: Arial, sans-serif;
+    font-size: 0.85rem; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--green-light); font-weight: 600; margin-bottom: 18px;
+  }
+  h1{
+    font-size: 2.4rem; line-height: 1.2; margin-bottom: 18px; font-weight: 700;
+  }
+  p{
+    font-family: Arial, sans-serif;
+    color: var(--gray-light); font-size: 1.02rem; line-height: 1.6;
+    margin-bottom: 40px;
+  }
+  .btn{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family: Arial, sans-serif; font-weight: 700; font-size: 0.95rem;
+    padding: 15px 32px; border-radius: 999px; cursor:pointer;
+    background: var(--green-light); color: var(--navy-deep);
+    text-decoration:none;
+    transition: transform 0.15s ease, background 0.2s ease;
+  }
+  .btn:hover{ background: #4fd382; transform: translateY(-2px); }
+
+  .sheep{
+    font-size: 3.4rem; margin-bottom: 10px; opacity:.9;
+  }
+</style>
+</head>
+<body>
+
+<div class="box">
+  <a href="/" class="logo">
+    <span class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M15 5L7 12L15 19" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="16.5" cy="12" r="3" fill="white"/>
+      </svg>
+    </span>
+    <span class="logo-text">Aidy<span>TAG</span></span>
+  </a>
+
+  <div class="code">Erreur 404</div>
+  <h1>Cette page s'est égarée dans le troupeau.</h1>
+  <p>La page que vous cherchez n'existe pas ou a été déplacée. Retournez à l'accueil pour continuer votre visite.</p>
+  <a href="/" class="btn">← Retour à l'accueil</a>
+</div>
+
+</body>
+</html>
