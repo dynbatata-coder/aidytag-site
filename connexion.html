@@ -276,7 +276,7 @@
         <select id="signup-role" required>
           <option value="">Sélectionnez votre rôle</option>
           <option value="eleveur">Éleveur</option>
-          <option value="veterinaire">Vétérinaire</option>
+          <option value="veto">Vétérinaire</option>
           <option value="gendarmerie">Gendarmerie</option>
         </select>
       </div>
@@ -350,8 +350,19 @@ async function handleLogin(e){
     showMsg("Connexion impossible : " + translateError(error.message), "error");
     return false;
   }
+
+  // Redirection selon le rôle (même logique que l'app Flutter)
+  const { data: profil } = await sb
+    .from('eleveurs')
+    .select('role')
+    .eq('email', email)
+    .maybeSingle();
+
+  const role = profil?.role || 'eleveur';
+  const destination = role === 'veto' ? '/espace-veterinaire' : '/espace-eleveur';
+
   showMsg("Connexion réussie. Redirection...", "success");
-  setTimeout(() => { window.location.href = '/espace-eleveur'; }, 900);
+  setTimeout(() => { window.location.href = destination; }, 900);
   return false;
 }
 
