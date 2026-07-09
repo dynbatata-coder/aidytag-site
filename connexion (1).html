@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connexion & Contact — AidyTag</title>
+<style>
+  :root{
+    --navy: #1F3864;
+    --navy-deep: #162846;
+    --green-dark: #1F7A4D;
+    --green-light: #3DC070;
+    --white: #FFFFFF;
+    --gray: #96A5C4;
+    --gray-light: #C9D2E5;
+  }
+  *{ box-sizing: border-box; margin:0; padding:0; }
+  body{
+    font-family: Georgia, 'Times New Roman', serif;
+    background: var(--navy);
+    color: var(--white);
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+  body::before{
+    content:"";
+    position: fixed;
+    top: -200px; right: -200px;
+    width: 700px; height: 700px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.03);
+    z-index: 0;
+  }
+  body::after{
+    content:"";
+    position: fixed;
+    bottom: -250px; left: -150px;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: rgba(61,192,112,0.05);
+    z-index: 0;
+  }
+  header{
+    position: relative; z-index: 2;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 28px 6vw;
+  }
+  .logo{ display:flex; align-items:center; gap:14px; text-decoration:none; }
+  .logo-icon{
+    width: 44px; height: 44px; border-radius: 12px;
+    background: var(--green-dark);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .logo-icon svg{ width: 24px; height: 24px; }
+  .logo-text{ font-size: 1.5rem; font-weight: 700; color: var(--white); }
+  .logo-text span{ color: var(--green-light); }
+  .back-link{
+    font-family: Georgia, serif;
+    color: var(--gray-light); text-decoration:none;
+    font-size: 0.95rem; letter-spacing: 0.03em;
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 10px 20px; border-radius: 999px;
+    transition: all 0.2s ease;
+  }
+  .back-link:hover{ border-color: var(--green-light); color: var(--white); }
+
+  main{
+    position: relative; z-index: 2;
+    max-width: 1100px; margin: 0 auto;
+    padding: 40px 6vw 100px;
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 70px;
+    align-items: start;
+  }
+  @media (max-width: 860px){
+    main{ grid-template-columns: 1fr; gap: 50px; padding-top: 10px; }
+  }
+
+  .eyebrow{
+    font-family: Arial, sans-serif;
+    font-size: 0.8rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--green-light); margin-bottom: 18px; font-weight: 600;
+  }
+  h1{
+    font-size: 2.6rem; line-height: 1.15; margin-bottom: 22px;
+    font-weight: 700;
+  }
+  .lead{
+    font-family: Arial, sans-serif;
+    color: var(--gray-light); font-size: 1.05rem; line-height: 1.6;
+    margin-bottom: 44px; max-width: 420px;
+  }
+
+  .contact-list{ display:flex; flex-direction: column; gap: 22px; }
+  .contact-item{
+    display:flex; align-items:center; gap: 16px;
+    text-decoration:none; color: var(--white);
+  }
+  .contact-item .icon{
+    width: 46px; height:46px; border-radius: 12px;
+    background: rgba(61,192,112,0.12);
+    border: 1px solid rgba(61,192,112,0.3);
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .contact-item .icon svg{ width:20px; height:20px; stroke: var(--green-light); }
+  .contact-item .label{
+    font-family: Arial, sans-serif;
+    font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--gray); display:block; margin-bottom: 2px;
+  }
+  .contact-item .value{ font-size: 1.15rem; font-weight: 600; }
+  .contact-item:hover .value{ color: var(--green-light); }
+
+  /* Auth card */
+  .auth-card{
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 44px;
+    backdrop-filter: blur(6px);
+  }
+  .tabs{
+    display:flex; gap: 4px; margin-bottom: 32px;
+    background: rgba(0,0,0,0.2); border-radius: 12px; padding: 4px;
+  }
+  .tab-btn{
+    flex:1; font-family: Arial, sans-serif; font-weight: 600; font-size: 0.95rem;
+    padding: 12px; border:none; border-radius: 9px; cursor:pointer;
+    background: transparent; color: var(--gray-light);
+    transition: all 0.2s ease;
+  }
+  .tab-btn.active{ background: var(--green-dark); color: var(--white); }
+
+  form{ display:none; flex-direction:column; gap: 18px; }
+  form.active{ display:flex; }
+
+  .field label{
+    font-family: Arial, sans-serif;
+    display:block; font-size: 0.85rem; color: var(--gray-light);
+    margin-bottom: 8px; letter-spacing: 0.02em;
+  }
+  .field input, .field select{
+    width: 100%; padding: 13px 16px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 10px; color: var(--white);
+    font-family: Arial, sans-serif; font-size: 0.98rem;
+    outline: none; transition: border-color 0.2s ease;
+  }
+  .field input::placeholder{ color: rgba(255,255,255,0.35); }
+  .field input:focus, .field select:focus{ border-color: var(--green-light); }
+
+  .submit-btn{
+    margin-top: 8px;
+    font-family: Arial, sans-serif; font-weight: 700; font-size: 1rem;
+    padding: 15px; border:none; border-radius: 10px; cursor:pointer;
+    background: var(--green-light); color: var(--navy-deep);
+    transition: transform 0.15s ease, background 0.2s ease;
+  }
+  .submit-btn:hover{ background: #4fd382; transform: translateY(-1px); }
+  .submit-btn:active{ transform: translateY(0); }
+
+  .form-note{
+    font-family: Arial, sans-serif; font-size: 0.82rem; color: var(--gray);
+    text-align:center; margin-top: 6px;
+  }
+  .form-msg{
+    font-family: Arial, sans-serif; font-size: 0.88rem;
+    padding: 10px 14px; border-radius: 8px; display:none;
+  }
+  .form-msg.show{ display:block; }
+  .form-msg.error{ background: rgba(220,60,60,0.15); color:#ff9d9d; border:1px solid rgba(220,60,60,0.3); }
+  .form-msg.success{ background: rgba(61,192,112,0.15); color: var(--green-light); border:1px solid rgba(61,192,112,0.3); }
+
+  footer{
+    position: relative; z-index: 2;
+    text-align:center; padding: 30px 6vw 40px;
+    font-family: Arial, sans-serif; font-size: 0.85rem; color: var(--gray);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a href="index.html" class="logo">
+    <span class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M15 5L7 12L15 19" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="16.5" cy="12" r="3" fill="white"/>
+      </svg>
+    </span>
+    <span class="logo-text">Aidy<span>TAG</span></span>
+  </a>
+  <a href="index.html" class="back-link">← Retour au site</a>
+</header>
+
+<main>
+  <div>
+    <div class="eyebrow">Contact & Accès</div>
+    <h1>Une question ?<br>Parlons-en.</h1>
+    <p class="lead">Pour toute demande d'informations, de partenariat ou de démonstration, notre équipe vous répond directement.</p>
+
+    <div class="contact-list">
+      <a href="tel:+213564475100" class="contact-item">
+        <span class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+          </svg>
+        </span>
+        <span>
+          <span class="label">Téléphone</span>
+          <span class="value">05 64 47 51 00</span>
+        </span>
+      </a>
+
+      <a href="mailto:contact@aidytag.com" class="contact-item">
+        <span class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+            <rect x="2" y="4" width="20" height="16" rx="2"/>
+            <path d="M22 6l-10 7L2 6"/>
+          </svg>
+        </span>
+        <span>
+          <span class="label">Email</span>
+          <span class="value">contact@aidytag.com</span>
+        </span>
+      </a>
+
+      <a href="https://aidytag.com" class="contact-item">
+        <span class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="2" y1="12" x2="22" y2="12"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+        </span>
+        <span>
+          <span class="label">Site web</span>
+          <span class="value">aidytag.com</span>
+        </span>
+      </a>
+    </div>
+  </div>
+
+  <div class="auth-card">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('login')">Connexion</button>
+      <button class="tab-btn" onclick="switchTab('signup')">Inscription</button>
+    </div>
+
+    <div id="msg" class="form-msg"></div>
+
+    <form id="login-form" class="active" onsubmit="return handleLogin(event)">
+      <div class="field">
+        <label for="login-email">Adresse e-mail</label>
+        <input type="email" id="login-email" placeholder="vous@exemple.com" required>
+      </div>
+      <div class="field">
+        <label for="login-password">Mot de passe</label>
+        <input type="password" id="login-password" placeholder="••••••••" required>
+      </div>
+      <button type="submit" class="submit-btn">Se connecter</button>
+      <p class="form-note">Espace réservé éleveurs, vétérinaires et gendarmerie</p>
+    </form>
+
+    <form id="signup-form" onsubmit="return handleSignup(event)">
+      <div class="field">
+        <label for="signup-name">Nom complet</label>
+        <input type="text" id="signup-name" placeholder="Votre nom" required>
+      </div>
+      <div class="field">
+        <label for="signup-role">Vous êtes</label>
+        <select id="signup-role" required>
+          <option value="">Sélectionnez votre rôle</option>
+          <option value="eleveur">Éleveur</option>
+          <option value="veterinaire">Vétérinaire</option>
+          <option value="gendarmerie">Gendarmerie</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="signup-email">Adresse e-mail</label>
+        <input type="email" id="signup-email" placeholder="vous@exemple.com" required>
+      </div>
+      <div class="field">
+        <label for="signup-phone">Téléphone</label>
+        <input type="tel" id="signup-phone" placeholder="05 XX XX XX XX" required>
+      </div>
+      <div class="field">
+        <label for="signup-password">Mot de passe</label>
+        <input type="password" id="signup-password" placeholder="8 caractères minimum" required minlength="8">
+      </div>
+      <button type="submit" class="submit-btn">Créer mon compte</button>
+      <p class="form-note">Votre compte sera vérifié avant activation</p>
+    </form>
+  </div>
+</main>
+
+<footer>
+  © 2026 AidyTag — Traçabilité ovine numérique · Algérie
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://kvhsiaaplfozyhbmozkx.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_6MkiIQIA_klVT8jP42iE_w_O4dU2JRW';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+function switchTab(tab){
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('form').forEach(f => f.classList.remove('active'));
+  document.getElementById('msg').classList.remove('show');
+  if(tab === 'login'){
+    document.querySelectorAll('.tab-btn')[0].classList.add('active');
+    document.getElementById('login-form').classList.add('active');
+  } else {
+    document.querySelectorAll('.tab-btn')[1].classList.add('active');
+    document.getElementById('signup-form').classList.add('active');
+  }
+}
+
+function showMsg(text, type){
+  const msg = document.getElementById('msg');
+  msg.textContent = text;
+  msg.className = 'form-msg show ' + type;
+}
+
+function setLoading(form, loading){
+  const btn = form.querySelector('.submit-btn');
+  btn.disabled = loading;
+  btn.style.opacity = loading ? 0.6 : 1;
+  btn.textContent = loading
+    ? '...'
+    : (form.id === 'login-form' ? 'Se connecter' : 'Créer mon compte');
+}
+
+async function handleLogin(e){
+  e.preventDefault();
+  const form = document.getElementById('login-form');
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+
+  setLoading(form, true);
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  setLoading(form, false);
+
+  if(error){
+    showMsg("Connexion impossible : " + translateError(error.message), "error");
+    return false;
+  }
+  showMsg("Connexion réussie. Bienvenue " + email + " !", "success");
+  return false;
+}
+
+async function handleSignup(e){
+  e.preventDefault();
+  const form = document.getElementById('signup-form');
+  const nom = document.getElementById('signup-name').value.trim();
+  const role = document.getElementById('signup-role').value;
+  const email = document.getElementById('signup-email').value.trim();
+  const telephone = document.getElementById('signup-phone').value.trim();
+  const password = document.getElementById('signup-password').value;
+
+  if(!role){
+    showMsg("Merci de sélectionner votre rôle.", "error");
+    return false;
+  }
+
+  setLoading(form, true);
+
+  const { data: authData, error: authError } = await sb.auth.signUp({ email, password });
+
+  if(authError){
+    setLoading(form, false);
+    showMsg("Inscription impossible : " + translateError(authError.message), "error");
+    return false;
+  }
+
+  const userId = authData.user ? authData.user.id : null;
+  const { error: dbError } = await sb.from('eleveurs').insert({
+    id: userId,
+    nom_complet: nom,
+    telephone: telephone,
+    email: email,
+    role: role,
+    statut: 'en_attente'
+  });
+
+  setLoading(form, false);
+
+  if(dbError){
+    showMsg("Compte créé, mais la fiche n'a pas pu être enregistrée automatiquement (" + dbError.message + "). Contactez-nous pour finaliser votre dossier.", "error");
+    return false;
+  }
+
+  showMsg(
+    "Compte créé avec succès ! Votre dossier est en cours de vérification. " +
+    "S'il manque des documents (carte Fellah, carte nationale), nous vous recontacterons directement par téléphone ou email pour les compléter.",
+    "success"
+  );
+  form.reset();
+  return false;
+}
+
+function translateError(msg){
+  if(msg.includes("Invalid login credentials")) return "email ou mot de passe incorrect.";
+  if(msg.includes("User already registered")) return "un compte existe déjà avec cet email.";
+  if(msg.includes("Password should be")) return "le mot de passe doit contenir au moins 8 caractères.";
+  return msg;
+}
+</script>
+
+</body>
+</html>
