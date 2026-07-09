@@ -378,9 +378,7 @@ async function handleSignup(e){
     return false;
   }
 
-  const userId = authData.user ? authData.user.id : null;
   const { error: dbError } = await sb.from('eleveurs').insert({
-    id: userId,
     nom_complet: nom,
     telephone: telephone,
     email: email,
