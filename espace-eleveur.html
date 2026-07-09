@@ -114,6 +114,15 @@
     font-family: monospace; font-size: 0.78rem; color: var(--gray);
     margin-top: 8px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08);
   }
+  .transfer-btn{
+    margin-top: 16px; width: 100%;
+    font-family: Arial, sans-serif; font-weight: 700; font-size: 0.82rem;
+    padding: 11px; border-radius: 9px; cursor:pointer;
+    background: rgba(224,168,62,0.12); color: var(--amber);
+    border: 1px solid rgba(224,168,62,0.3);
+    transition: background 0.2s ease;
+  }
+  .transfer-btn:hover{ background: rgba(224,168,62,0.22); }
 
   /* Modal */
   .modal-overlay{
@@ -141,6 +150,45 @@
     background: rgba(255,255,255,0.08); color: var(--white);
   }
   .modal-close:hover{ background: rgba(255,255,255,0.14); }
+
+  /* Transfer modal */
+  .transfer-field{ margin-bottom: 16px; text-align: left; }
+  .transfer-field label{
+    display:block; font-family: Arial, sans-serif; font-size: 0.85rem;
+    color: var(--gray-light); margin-bottom: 8px;
+  }
+  .transfer-field input[type="email"]{
+    width: 100%; padding: 12px 14px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 10px; color: var(--white);
+    font-family: Arial, sans-serif; font-size: 0.92rem;
+    outline: none;
+  }
+  .transfer-field input[type="email"]:focus{ border-color: var(--green-light); }
+  .file-drop{
+    display:flex; align-items:center; gap:10px;
+    padding: 12px 14px;
+    background: rgba(255,255,255,0.06);
+    border: 1px dashed rgba(255,255,255,0.25);
+    border-radius: 10px; cursor:pointer;
+    font-family: Arial, sans-serif; font-size: 0.85rem; color: var(--gray-light);
+  }
+  .file-drop.filled{ border-style: solid; border-color: var(--green-light); color: var(--white); }
+  .transfer-submit{
+    margin-top: 10px; width: 100%;
+    font-family: Arial, sans-serif; font-weight: 700; font-size: 0.95rem;
+    padding: 14px; border:none; border-radius: 10px; cursor:pointer;
+    background: var(--amber); color: var(--navy-deep);
+  }
+  .transfer-submit:disabled{ opacity: 0.5; cursor: not-allowed; }
+  .transfer-msg{
+    font-family: Arial, sans-serif; font-size: 0.85rem;
+    padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; display:none;
+  }
+  .transfer-msg.show{ display:block; }
+  .transfer-msg.error{ background: rgba(220,60,60,0.15); color:#ff9d9d; }
+  .transfer-msg.success{ background: rgba(61,192,112,0.15); color: var(--green-light); }
 </style>
 </head>
 <body>
@@ -187,6 +235,40 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="transferOverlay" onclick="closeTransferOnOverlay(event)">
+  <div class="modal">
+    <h2 id="transferAnimalName"></h2>
+    <div class="modal-race" style="margin-bottom:24px;">Transfert de propriété — carte Fellah et carte d'identité obligatoires</div>
+
+    <div id="transferMsg" class="transfer-msg"></div>
+
+    <form id="transferForm" onsubmit="return handleTransfer(event)">
+      <div class="transfer-field">
+        <label>Email du nouvel éleveur (doit déjà avoir un compte AidyTag)</label>
+        <input type="email" id="buyerEmail" placeholder="acheteur@exemple.com" required>
+      </div>
+      <div class="transfer-field">
+        <label>Carte Fellah (photo)</label>
+        <label class="file-drop" id="dropFellah">
+          <span id="labelFellah">Choisir un fichier...</span>
+          <input type="file" id="fileFellah" accept="image/*,.pdf" style="display:none" required
+            onchange="onFileChosen('fileFellah','labelFellah','dropFellah')">
+        </label>
+      </div>
+      <div class="transfer-field">
+        <label>Carte d'identité nationale (photo)</label>
+        <label class="file-drop" id="dropCin">
+          <span id="labelCin">Choisir un fichier...</span>
+          <input type="file" id="fileCin" accept="image/*,.pdf" style="display:none" required
+            onchange="onFileChosen('fileCin','labelCin','dropCin')">
+        </label>
+      </div>
+      <button type="submit" class="transfer-submit" id="transferSubmitBtn">Confirmer le transfert</button>
+    </form>
+    <button class="modal-close" onclick="closeTransferModal()" style="margin-top:10px;">Annuler</button>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = 'https://kvhsiaaplfozyhbmozkx.supabase.co';
@@ -195,6 +277,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let allAnimals = [];
 let currentUserEmail = null;
+let currentEleveurId = null;
 
 async function init(){
   const { data: { session } } = await sb.auth.getSession();
@@ -207,6 +290,20 @@ async function init(){
   currentUserEmail = session.user.email;
   document.getElementById('userEmail').textContent = currentUserEmail;
 
+  // Même logique que l'app Flutter : on récupère le profil eleveurs par email
+  const { data: profil, error: profilError } = await sb
+    .from('eleveurs')
+    .select()
+    .eq('email', currentUserEmail)
+    .maybeSingle();
+
+  if(profilError || !profil){
+    document.getElementById('content').innerHTML =
+      '<div class="state-msg">Aucun profil éleveur trouvé pour ce compte. Contactez l\'équipe AidyTag.</div>';
+    return;
+  }
+
+  currentEleveurId = profil.id;
   await loadAnimals();
 }
 
@@ -215,7 +312,7 @@ async function loadAnimals(){
   const { data, error } = await sb
     .from('animal')
     .select('*')
-    .eq('proprietaire_email', currentUserEmail);
+    .eq('eleveur_id', currentEleveurId);
 
   if(error){
     content.innerHTML = '<div class="state-msg">Erreur de chargement : ' + error.message + '</div>';
@@ -249,19 +346,22 @@ function renderAnimals(animals){
   }
 
   const cards = animals.map((a, i) => `
-    <div class="card" onclick="openModal(${i})">
-      <div class="card-top">
-        <div>
-          <div class="card-name">${escapeHtml(a.nom || 'Sans nom')}</div>
-          <div class="card-race">${escapeHtml(a.race || '—')}</div>
+    <div class="card">
+      <div onclick="openModal(${i})">
+        <div class="card-top">
+          <div>
+            <div class="card-name">${escapeHtml(a.nom || 'Sans nom')}</div>
+            <div class="card-race">${escapeHtml(a.race || '—')}</div>
+          </div>
+          <span class="badge ${statusClass(a.statut)}">${escapeHtml(a.statut || '—')}</span>
         </div>
-        <span class="badge ${statusClass(a.statut)}">${escapeHtml(a.statut || '—')}</span>
+        <div class="card-details">
+          <span>Sexe : ${escapeHtml(a.sexe || '—')}</span>
+          <span>Naissance : ${escapeHtml(a.date_naissance || '—')}</span>
+          <span class="tag">UID : ${escapeHtml(a.tag_uid || '—')}</span>
+        </div>
       </div>
-      <div class="card-details">
-        <span>Sexe : ${escapeHtml(a.sexe || '—')}</span>
-        <span>Naissance : ${escapeHtml(a.date_naissance || '—')}</span>
-        <span class="tag">UID : ${escapeHtml(a.tag_uid || '—')}</span>
-      </div>
+      <button class="transfer-btn" onclick="openTransferModal(${i})">Vendre / Transférer</button>
     </div>
   `).join('');
 
@@ -315,6 +415,157 @@ function escapeHtml(str){
 async function handleLogout(){
   await sb.auth.signOut();
   window.location.href = '/connexion';
+}
+
+// ---- Transfert de propriété ----
+let transferAnimalIndex = null;
+
+function openTransferModal(index){
+  transferAnimalIndex = index;
+  const a = window.__currentList[index];
+  document.getElementById('transferAnimalName').textContent = 'Transférer ' + (a.nom || 'cet animal');
+  document.getElementById('transferForm').reset();
+  document.getElementById('labelFellah').textContent = 'Choisir un fichier...';
+  document.getElementById('labelCin').textContent = 'Choisir un fichier...';
+  document.getElementById('dropFellah').classList.remove('filled');
+  document.getElementById('dropCin').classList.remove('filled');
+  document.getElementById('transferMsg').classList.remove('show');
+  document.getElementById('transferOverlay').classList.add('show');
+}
+
+function closeTransferModal(){
+  document.getElementById('transferOverlay').classList.remove('show');
+}
+
+function closeTransferOnOverlay(e){
+  if(e.target.id === 'transferOverlay') closeTransferModal();
+}
+
+function onFileChosen(inputId, labelId, dropId){
+  const input = document.getElementById(inputId);
+  const label = document.getElementById(labelId);
+  const drop = document.getElementById(dropId);
+  if(input.files && input.files[0]){
+    label.textContent = input.files[0].name;
+    drop.classList.add('filled');
+  }
+}
+
+function showTransferMsg(text, type){
+  const msg = document.getElementById('transferMsg');
+  msg.textContent = text;
+  msg.className = 'transfer-msg show ' + type;
+}
+
+async function handleTransfer(e){
+  e.preventDefault();
+  const btn = document.getElementById('transferSubmitBtn');
+  const a = window.__currentList[transferAnimalIndex];
+  const buyerEmail = document.getElementById('buyerEmail').value.trim();
+  const fileFellah = document.getElementById('fileFellah').files[0];
+  const fileCin = document.getElementById('fileCin').files[0];
+
+  if(!fileFellah || !fileCin){
+    showTransferMsg("Les deux documents (carte Fellah et carte d'identité) sont obligatoires.", "error");
+    return false;
+  }
+
+  if(buyerEmail.toLowerCase() === currentUserEmail.toLowerCase()){
+    showTransferMsg("Vous ne pouvez pas vous transférer un animal à vous-même.", "error");
+    return false;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Vérification...";
+
+  // 1. Vérifier que l'acheteur a bien un compte AidyTag
+  const { data: buyer, error: buyerError } = await sb
+    .from('eleveurs')
+    .select('id, nom_complet')
+    .eq('email', buyerEmail)
+    .maybeSingle();
+
+  if(buyerError || !buyer){
+    btn.disabled = false;
+    btn.textContent = "Confirmer le transfert";
+    showTransferMsg("Aucun compte AidyTag trouvé pour cet email. L'acheteur doit d'abord s'inscrire.", "error");
+    return false;
+  }
+
+  btn.textContent = "Envoi des documents...";
+
+  // 2. Upload des deux documents dans le bucket Storage
+  const timestamp = Date.now();
+  const pathFellah = `${a.id}/${timestamp}_fellah_${fileFellah.name}`;
+  const pathCin = `${a.id}/${timestamp}_cin_${fileCin.name}`;
+
+  const { error: uploadFellahError } = await sb.storage
+    .from('documents-transfert')
+    .upload(pathFellah, fileFellah);
+
+  if(uploadFellahError){
+    btn.disabled = false;
+    btn.textContent = "Confirmer le transfert";
+    showTransferMsg("Erreur envoi carte Fellah : " + uploadFellahError.message, "error");
+    return false;
+  }
+
+  const { error: uploadCinError } = await sb.storage
+    .from('documents-transfert')
+    .upload(pathCin, fileCin);
+
+  if(uploadCinError){
+    btn.disabled = false;
+    btn.textContent = "Confirmer le transfert";
+    showTransferMsg("Erreur envoi carte d'identité : " + uploadCinError.message, "error");
+    return false;
+  }
+
+  const { data: urlFellah } = sb.storage.from('documents-transfert').getPublicUrl(pathFellah);
+  const { data: urlCin } = sb.storage.from('documents-transfert').getPublicUrl(pathCin);
+
+  btn.textContent = "Enregistrement...";
+
+  // 3. Créer l'enregistrement de transfert (traçabilité)
+  // On stocke le CHEMIN du fichier (pas une URL publique) car le bucket est privé.
+  // La lecture se fera via un lien signé temporaire, généré à la demande.
+  const { error: transferError } = await sb.from('transferts_propriete').insert({
+    animal_id: a.id,
+    ancien_eleveur_id: currentEleveurId,
+    nouveau_eleveur_id: buyer.id,
+    date_transfert: new Date().toISOString(),
+    document_url: pathFellah,
+    document_url_cin: pathCin
+  });
+
+  if(transferError){
+    btn.disabled = false;
+    btn.textContent = "Confirmer le transfert";
+    showTransferMsg("Erreur d'enregistrement du transfert : " + transferError.message, "error");
+    return false;
+  }
+
+  // 4. Réattribuer l'animal au nouvel éleveur
+  const { error: updateError } = await sb
+    .from('animal')
+    .update({ eleveur_id: buyer.id })
+    .eq('id', a.id);
+
+  if(updateError){
+    btn.disabled = false;
+    btn.textContent = "Confirmer le transfert";
+    showTransferMsg("Le transfert est enregistré mais le changement de propriétaire a échoué : " + updateError.message, "error");
+    return false;
+  }
+
+  showTransferMsg("Transfert confirmé. " + (a.nom || 'L\'animal') + " appartient maintenant à " + (buyer.nom_complet || buyerEmail) + ".", "success");
+
+  setTimeout(async () => {
+    closeTransferModal();
+    await loadAnimals();
+  }, 1800);
+
+  return false;
 }
 
 init();
