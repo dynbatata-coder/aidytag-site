@@ -350,7 +350,8 @@ async function handleLogin(e){
     showMsg("Connexion impossible : " + translateError(error.message), "error");
     return false;
   }
-  showMsg("Connexion réussie. Bienvenue " + email + " !", "success");
+  showMsg("Connexion réussie. Redirection...", "success");
+  setTimeout(() => { window.location.href = '/espace-eleveur'; }, 900);
   return false;
 }
 
