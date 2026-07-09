@@ -98,6 +98,20 @@
   .btn-ghost{background:transparent; border-color:var(--line); color:var(--ink);}
   .btn-dark{background:var(--navy); color:var(--paper);}
   .btn-dark:hover{box-shadow:0 12px 24px -10px rgba(24,42,74,.5);}
+
+  /* ---------- BOTTOM ACTION BAR ---------- */
+  .bottom-bar{
+    position:fixed; left:0; right:0; bottom:0; z-index:200;
+    display:flex; justify-content:center; gap:12px;
+    padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+    background:rgba(251,249,244,.97); backdrop-filter:blur(10px);
+    box-shadow:0 -4px 16px -6px rgba(14,25,48,.15);
+  }
+  .bottom-bar .btn{flex:1; max-width:280px; justify-content:center;}
+  body{padding-bottom:74px;}
+  @media (max-width:600px){
+    .bottom-bar .btn{font-size:.8rem; padding:12px 14px;}
+  }
   .btn-outline-navy{background:transparent; border-color:var(--navy); color:var(--navy);}
   .navtoggle{display:none;}
 
@@ -415,13 +429,12 @@
     </nav>
     <button class="navtoggle" id="navToggleBtn" aria-label="Menu">☰</button>
     <div class="head-actions">
+      <a href="connexion.html" class="btn btn-outline-navy" data-i18n="nav_connexion">Connexion</a>
       <div class="langswitch">
         <button data-lang-btn="fr" class="active">FR</button>
         <button data-lang-btn="ar">AR</button>
         <button data-lang-btn="en">EN</button>
       </div>
-      <a href="demo.html" class="btn btn-outline-navy" data-i18n="nav_demo">Voir la démo</a>
-      <a href="#" class="btn btn-primary js-open-contact" data-tab="eleveur" data-i18n="navcta">Rejoindre le pilote</a>
     </div>
   </div>
 </header>
@@ -761,7 +774,7 @@
       <div class="contact-side">
         <div class="contact-item">
           <div class="ic">✆</div>
-          <div><h4 data-i18n="c_phone">Téléphone / WhatsApp</h4><p data-i18n="c_phone_p">Disponible pour les éleveurs et partenaires du pilote</p></div>
+          <div><h4 data-i18n="c_phone">Téléphone / WhatsApp</h4><p><a href="tel:+213564475100" style="color:var(--ink); font-weight:700;">05 64 47 51 00</a></p><p style="font-size:.78rem;" data-i18n="c_phone_p">Disponible pour les éleveurs et partenaires du pilote</p></div>
         </div>
         <div class="contact-item">
           <div class="ic">✉</div>
@@ -961,6 +974,10 @@
     </div>
   </div>
 </footer>
+
+<div class="bottom-bar">
+  <a href="demo.html" class="btn btn-primary" data-i18n="nav_demo">Voir la démo</a>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
