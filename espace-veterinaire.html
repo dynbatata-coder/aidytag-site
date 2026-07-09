@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Espace Vétérinaire — AidyTag</title>
+<style>
+  :root{
+    --navy: #1F3864;
+    --navy-deep: #162846;
+    --navy-card: rgba(255,255,255,0.04);
+    --veto: #0369A1;
+    --veto-light: #38BDF8;
+    --green-light: #3DC070;
+    --white: #FFFFFF;
+    --gray: #96A5C4;
+    --gray-light: #C9D2E5;
+    --amber: #E0A83E;
+    --red: #E0645A;
+  }
+  *{ box-sizing: border-box; margin:0; padding:0; }
+  body{
+    font-family: Georgia, 'Times New Roman', serif;
+    background: var(--navy);
+    color: var(--white);
+    min-height: 100vh;
+  }
+  header{
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 24px 6vw;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .logo{ display:flex; align-items:center; gap:14px; text-decoration:none; }
+  .logo-icon{
+    width: 40px; height: 40px; border-radius: 11px;
+    background: var(--veto);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .logo-icon svg{ width: 22px; height: 22px; }
+  .logo-text{ font-size: 1.3rem; font-weight: 700; color: var(--white); }
+  .logo-text span{ color: var(--veto-light); }
+  .header-right{ display:flex; align-items:center; gap:16px; }
+  .user-email{ font-family: Arial, sans-serif; font-size: 0.85rem; color: var(--gray-light); }
+  .logout-btn{
+    font-family: Arial, sans-serif; font-size: 0.85rem; font-weight: 600;
+    color: var(--gray-light); background: transparent;
+    border: 1px solid rgba(255,255,255,0.2); border-radius: 999px;
+    padding: 9px 18px; cursor: pointer; transition: all 0.2s ease;
+  }
+  .logout-btn:hover{ border-color: #ff9d9d; color: #ff9d9d; }
+
+  main{ max-width: 780px; margin: 0 auto; padding: 48px 6vw 100px; }
+
+  .page-title{ font-size: 2rem; margin-bottom: 6px; font-weight: 700; }
+  .page-sub{
+    font-family: Arial, sans-serif; color: var(--gray-light);
+    font-size: 1rem; margin-bottom: 36px;
+  }
+
+  .search-card{
+    background: var(--navy-card);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px; padding: 24px; margin-bottom: 24px;
+  }
+  .search-card label{
+    display:block; font-family: Arial, sans-serif; font-size: 0.82rem;
+    color: var(--gray-light); margin-bottom: 10px;
+  }
+  .search-row{ display:flex; gap:10px; }
+  .search-row input{
+    flex:1; padding: 13px 16px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 10px; color: var(--white);
+    font-family: monospace; font-size: 0.95rem;
+    outline: none;
+  }
+  .search-row input:focus{ border-color: var(--veto-light); }
+  .search-row button{
+    font-family: Arial, sans-serif; font-weight: 700; font-size: 0.9rem;
+    padding: 0 26px; border:none; border-radius: 10px; cursor:pointer;
+    background: var(--veto); color: var(--white);
+  }
+  .search-row button:disabled{ opacity: 0.6; cursor: not-allowed; }
+
+  .state-msg{
+    font-family: Arial, sans-serif; color: var(--gray-light);
+    text-align: center; padding: 30px 20px;
+  }
+  .state-msg.warn{ color: var(--amber); }
+
+  .animal-card{
+    background: var(--navy-card);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px; padding: 24px; margin-bottom: 20px;
+  }
+  .animal-top{ display:flex; justify-content: space-between; align-items:flex-start; margin-bottom: 16px; }
+  .animal-name{ font-size: 1.4rem; font-weight: 700; }
+  .animal-race{ font-family: Arial, sans-serif; font-size: 0.85rem; color: var(--gray); }
+  .badge{
+    font-family: Arial, sans-serif; font-size: 0.72rem; font-weight: 700;
+    letter-spacing: 0.03em; padding: 5px 12px; border-radius: 999px; text-transform: uppercase;
+  }
+  .badge.sain, .badge.actif{ background: rgba(61,192,112,0.15); color: var(--green-light); }
+  .badge.en-traitement{ background: rgba(224,168,62,0.18); color: var(--amber); }
+  .badge.malade{ background: rgba(224,101,90,0.18); color: var(--red); }
+  .badge.default{ background: rgba(255,255,255,0.1); color: var(--gray-light); }
+
+  .info-grid{
+    font-family: Arial, sans-serif; font-size: 0.88rem;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    padding: 16px 0; border-top: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 18px;
+  }
+  .info-grid .label{ color: var(--gray); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.03em; }
+  .info-grid .value{ font-weight: 600; }
+
+  .section-title{
+    font-family: Arial, sans-serif; font-weight: 700; font-size: 0.95rem;
+    margin-bottom: 12px; display:flex; align-items:center; gap:8px;
+  }
+
+  .event-item{
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px; padding: 12px 14px; margin-bottom: 8px;
+    font-family: Arial, sans-serif;
+    display:flex; justify-content: space-between; align-items:flex-start; gap: 10px;
+  }
+  .event-item .etitle{ font-weight: 700; font-size: 0.85rem; }
+  .event-item .edesc{ font-size: 0.78rem; color: var(--gray-light); margin-top: 2px; }
+  .event-item .edate{ font-size: 0.75rem; color: var(--gray); white-space: nowrap; }
+
+  .add-event-btn{
+    margin-top: 14px; width: 100%;
+    font-family: Arial, sans-serif; font-weight: 700; font-size: 0.9rem;
+    padding: 13px; border-radius: 10px; cursor:pointer;
+    background: var(--veto); color: var(--white); border: none;
+  }
+  .add-event-btn:hover{ background: #0480c4; }
+
+  /* Modal */
+  .modal-overlay{
+    display:none; position: fixed; inset:0; background: rgba(10,16,30,0.7);
+    z-index: 300; align-items:center; justify-content:center; padding: 24px;
+  }
+  .modal-overlay.show{ display:flex; }
+  .modal{
+    background: var(--navy-deep); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 18px; padding: 32px; max-width: 440px; width:100%;
+  }
+  .modal h2{ font-size: 1.4rem; margin-bottom: 20px; }
+  .field{ margin-bottom: 16px; text-align: left; }
+  .field label{
+    display:block; font-family: Arial, sans-serif; font-size: 0.85rem;
+    color: var(--gray-light); margin-bottom: 8px;
+  }
+  .field select, .field input, .field textarea{
+    width: 100%; padding: 12px 14px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 10px; color: var(--white);
+    font-family: Arial, sans-serif; font-size: 0.92rem;
+    outline: none;
+  }
+  .field select:focus, .field input:focus, .field textarea:focus{ border-color: var(--veto-light); }
+  .field textarea{ resize: vertical; min-height: 70px; }
+  .modal-actions{ display:flex; gap: 10px; margin-top: 8px; }
+  .modal-submit{
+    flex:1; font-family: Arial, sans-serif; font-weight: 700; font-size: 0.95rem;
+    padding: 14px; border:none; border-radius: 10px; cursor:pointer;
+    background: var(--veto); color: var(--white);
+  }
+  .modal-cancel{
+    font-family: Arial, sans-serif; font-weight: 600; font-size: 0.9rem;
+    padding: 14px 20px; border-radius: 10px; cursor:pointer;
+    background: rgba(255,255,255,0.08); color: var(--white); border:none;
+  }
+  .modal-msg{
+    font-family: Arial, sans-serif; font-size: 0.85rem;
+    padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; display:none;
+  }
+  .modal-msg.show{ display:block; }
+  .modal-msg.error{ background: rgba(220,60,60,0.15); color:#ff9d9d; }
+  .modal-msg.success{ background: rgba(61,192,112,0.15); color: var(--green-light); }
+</style>
+</head>
+<body>
+
+<header>
+  <a href="/" class="logo">
+    <span class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M15 5L7 12L15 19" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="16.5" cy="12" r="3" fill="white"/>
+      </svg>
+    </span>
+    <span class="logo-text">Aidy<span>TAG</span></span>
+  </a>
+  <div class="header-right">
+    <span class="user-email" id="userEmail"></span>
+    <button class="logout-btn" onclick="handleLogout()">Déconnexion</button>
+  </div>
+</header>
+
+<main>
+  <div class="page-title">Espace Vétérinaire</div>
+  <div class="page-sub">Recherchez un animal par UID de tag pour consulter sa fiche médicale complète.</div>
+
+  <div class="search-card">
+    <label>UID du tag NFC</label>
+    <div class="search-row">
+      <input type="text" id="tagInput" placeholder="Ex: 0428AF9FC32A81" autocomplete="off">
+      <button onclick="rechercherAnimal()" id="searchBtn">Rechercher</button>
+    </div>
+  </div>
+
+  <div id="resultZone"></div>
+</main>
+
+<div class="modal-overlay" id="eventOverlay" onclick="closeEventOnOverlay(event)">
+  <div class="modal">
+    <h2>Ajouter un événement médical</h2>
+    <div id="eventMsg" class="modal-msg"></div>
+    <form id="eventForm" onsubmit="return handleAddEvent(event)">
+      <div class="field">
+        <label>Type d'événement</label>
+        <select id="eventType" required>
+          <option value="">Sélectionner...</option>
+          <option value="Vaccination">Vaccination</option>
+          <option value="Traitement">Traitement</option>
+          <option value="Contrôle">Contrôle</option>
+          <option value="Déplacement">Déplacement</option>
+          <option value="Naissance">Naissance</option>
+          <option value="Vente">Vente</option>
+          <option value="Abattage">Abattage</option>
+          <option value="Autre">Autre</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Description (optionnel)</label>
+        <textarea id="eventDesc" placeholder="Détails du soin, dosage, remarques..."></textarea>
+      </div>
+      <div class="field">
+        <label>Date</label>
+        <input type="date" id="eventDate" required>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="modal-cancel" onclick="closeEventModal()">Annuler</button>
+        <button type="submit" class="modal-submit" id="eventSubmitBtn">Enregistrer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://kvhsiaaplfozyhbmozkx.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_6MkiIQIA_klVT8jP42iE_w_O4dU2JRW';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUserEmail = null;
+let currentAnimal = null;
+
+async function init(){
+  const { data: { session } } = await sb.auth.getSession();
+  if(!session){
+    window.location.href = '/connexion';
+    return;
+  }
+  currentUserEmail = session.user.email;
+  document.getElementById('userEmail').textContent = currentUserEmail;
+}
+
+document.getElementById('tagInput').addEventListener('keyup', function(e){
+  if(e.key === 'Enter') rechercherAnimal();
+});
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str ?? '';
+  return div.innerHTML;
+}
+
+function statusClass(statut){
+  if(!statut) return 'default';
+  const s = statut.toLowerCase().replace(/\s+/g, '-');
+  if(['sain','actif','en-traitement','malade'].includes(s)) return s;
+  return 'default';
+}
+
+function eventEmoji(type){
+  const t = (type || '').toLowerCase();
+  if(t.includes('vacc')) return '💉';
+  if(t.includes('trait')) return '💊';
+  if(t.includes('contr')) return '✅';
+  if(t.includes('dépl') || t.includes('depl')) return '🚚';
+  if(t.includes('naiss')) return '🐣';
+  if(t.includes('vente')) return '🏷️';
+  if(t.includes('abatt')) return '⚠️';
+  return '📋';
+}
+
+async function rechercherAnimal(){
+  const uid = document.getElementById('tagInput').value.trim();
+  const resultZone = document.getElementById('resultZone');
+  const btn = document.getElementById('searchBtn');
+
+  if(!uid){ return; }
+
+  btn.disabled = true;
+  btn.textContent = "Recherche...";
+  resultZone.innerHTML = '<div class="state-msg">Recherche en cours...</div>';
+
+  const { data: animals, error } = await sb
+    .from('animal')
+    .select('*')
+    .eq('tag_uid', uid);
+
+  btn.disabled = false;
+  btn.textContent = "Rechercher";
+
+  if(error){
+    resultZone.innerHTML = '<div class="state-msg warn">Erreur : ' + escapeHtml(error.message) + '</div>';
+    return;
+  }
+
+  if(!animals || animals.length === 0){
+    resultZone.innerHTML = '<div class="state-msg warn">Aucun animal enregistré avec ce tag UID.</div>';
+    currentAnimal = null;
+    return;
+  }
+
+  const a = animals[0];
+  currentAnimal = a;
+
+  let proprietaire = null;
+  if(a.eleveur_id){
+    const { data: prop } = await sb
+      .from('eleveurs')
+      .select('nom_complet, telephone, wilaya')
+      .eq('id', a.eleveur_id)
+      .maybeSingle();
+    proprietaire = prop;
+  }
+
+  const { data: events } = await sb
+    .from('events')
+    .select('*')
+    .eq('animal_id', a.id)
+    .order('event_date', { ascending: false });
+
+  renderAnimal(a, proprietaire, events || []);
+}
+
+function renderAnimal(a, proprietaire, events){
+  const resultZone = document.getElementById('resultZone');
+
+  const eventsHtml = events.length === 0
+    ? '<div class="state-msg" style="padding:16px 0;">Aucun événement médical enregistré.</div>'
+    : events.map(e => `
+        <div class="event-item">
+          <div>
+            <div class="etitle">${eventEmoji(e.event_type)} ${escapeHtml(e.title || e.event_type)}</div>
+            ${e.description ? '<div class="edesc">' + escapeHtml(e.description) + '</div>' : ''}
+          </div>
+          <div class="edate">${escapeHtml(e.event_date)}</div>
+        </div>
+      `).join('');
+
+  resultZone.innerHTML = `
+    <div class="animal-card">
+      <div class="animal-top">
+        <div>
+          <div class="animal-name">${escapeHtml(a.nom || 'Sans nom')}</div>
+          <div class="animal-race">${escapeHtml(a.race || '—')}</div>
+        </div>
+        <span class="badge ${statusClass(a.statut)}">${escapeHtml(a.statut || '—')}</span>
+      </div>
+      <div class="info-grid">
+        <div><div class="label">Sexe</div><div class="value">${escapeHtml(a.sexe || '—')}</div></div>
+        <div><div class="label">Naissance</div><div class="value">${escapeHtml(a.date_naissance || '—')}</div></div>
+        <div><div class="label">Tag UID</div><div class="value" style="font-family:monospace; font-size:0.8rem;">${escapeHtml(a.tag_uid || '—')}</div></div>
+        <div><div class="label">Propriétaire</div><div class="value">${proprietaire ? escapeHtml(proprietaire.nom_complet) + (proprietaire.wilaya ? ' · ' + escapeHtml(proprietaire.wilaya) : '') : '—'}</div></div>
+      </div>
+      <div class="section-title">📋 Fiche médicale — ${events.length} événement(s)</div>
+      ${eventsHtml}
+      <button class="add-event-btn" onclick="openEventModal()">+ Ajouter un événement médical</button>
+    </div>
+  `;
+}
+
+function openEventModal(){
+  if(!currentAnimal) return;
+  document.getElementById('eventForm').reset();
+  document.getElementById('eventDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('eventMsg').classList.remove('show');
+  document.getElementById('eventOverlay').classList.add('show');
+}
+
+function closeEventModal(){
+  document.getElementById('eventOverlay').classList.remove('show');
+}
+
+function closeEventOnOverlay(e){
+  if(e.target.id === 'eventOverlay') closeEventModal();
+}
+
+function showEventMsg(text, type){
+  const msg = document.getElementById('eventMsg');
+  msg.textContent = text;
+  msg.className = 'modal-msg show ' + type;
+}
+
+async function handleAddEvent(e){
+  e.preventDefault();
+  const btn = document.getElementById('eventSubmitBtn');
+  const type = document.getElementById('eventType').value;
+  const desc = document.getElementById('eventDesc').value.trim();
+  const date = document.getElementById('eventDate').value;
+
+  if(!type){
+    showEventMsg("Veuillez choisir un type d'événement.", "error");
+    return false;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Enregistrement...";
+
+  const { error } = await sb.from('events').insert({
+    animal_id: currentAnimal.id,
+    event_type: type,
+    title: type,
+    description: desc,
+    event_date: date
+  });
+
+  btn.disabled = false;
+  btn.textContent = "Enregistrer";
+
+  if(error){
+    showEventMsg("Erreur : " + error.message, "error");
+    return false;
+  }
+
+  showEventMsg("Événement enregistré avec succès.", "success");
+  setTimeout(async () => {
+    closeEventModal();
+    await rechercherAnimalSilencieux();
+  }, 1000);
+
+  return false;
+}
+
+async function rechercherAnimalSilencieux(){
+  const { data: events } = await sb
+    .from('events')
+    .select('*')
+    .eq('animal_id', currentAnimal.id)
+    .order('event_date', { ascending: false });
+
+  let proprietaire = null;
+  if(currentAnimal.eleveur_id){
+    const { data: prop } = await sb
+      .from('eleveurs')
+      .select('nom_complet, telephone, wilaya')
+      .eq('id', currentAnimal.eleveur_id)
+      .maybeSingle();
+    proprietaire = prop;
+  }
+
+  renderAnimal(currentAnimal, proprietaire, events || []);
+}
+
+async function handleLogout(){
+  await sb.auth.signOut();
+  window.location.href = '/connexion';
+}
+
+init();
+</script>
+
+</body>
+</html>
