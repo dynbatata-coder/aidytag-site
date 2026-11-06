@@ -281,7 +281,6 @@
           <option value="">Sélectionnez votre rôle</option>
           <option value="eleveur">Éleveur</option>
           <option value="veto">Vétérinaire</option>
-          <option value="gendarmerie">Autorités</option>
         </select>
       </div>
       <div class="field">
@@ -386,26 +385,21 @@ async function handleSignup(e){
 
   setLoading(form, true);
 
-  const { data: authData, error: authError } = await sb.auth.signUp({ email, password });
-
-  if(authError){
-    setLoading(form, false);
-    showMsg("Inscription impossible : " + translateError(authError.message), "error");
-    return false;
-  }
-
-  const { error: dbError } = await sb.from('eleveurs').insert({
-    nom_complet: nom,
-    telephone: telephone,
-    email: email,
-    role: role,
-    statut: 'en_attente'
+  // Le profil AidyTag est créé automatiquement par la base à partir de ces
+  // informations (même système que l'appli) : aucune insertion en double.
+  const { data: authData, error: authError } = await sb.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: 'https://www.aidytag.com/connexion',
+      data: { nom_complet: nom, telephone: telephone, role: role }
+    }
   });
 
   setLoading(form, false);
 
-  if(dbError){
-    showMsg("Compte créé, mais la fiche n'a pas pu être enregistrée automatiquement (" + dbError.message + "). Contactez-nous pour finaliser votre dossier.", "error");
+  if(authError){
+    showMsg("Inscription impossible : " + translateError(authError.message), "error");
     return false;
   }
 

@@ -483,11 +483,10 @@ async function handleTransfer(e){
   btn.textContent = "Vérification...";
 
   // 1. Vérifier que l'acheteur a bien un compte AidyTag
-  const { data: buyer, error: buyerError } = await sb
-    .from('eleveurs')
-    .select('id, nom_complet')
-    .eq('email', buyerEmail)
-    .maybeSingle();
+  // Recherche sécurisée : le serveur ne renvoie que l'id et le nom de l'acheteur.
+  const { data: buyerRows, error: buyerError } = await sb
+    .rpc('aidytag_trouver_acheteur', { p_recherche: buyerEmail });
+  const buyer = (buyerRows && buyerRows.length) ? buyerRows[0] : null;
 
   if(buyerError || !buyer){
     btn.disabled = false;
