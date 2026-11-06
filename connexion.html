@@ -467,11 +467,19 @@ async function envoyerCodeInscription(premierEnvoi){
   } else if(r.code === 'TROP_DE_DEMANDES'){
     showMsg("Trop de codes demandés. Réessayez dans une heure ou contactez contact@aidytag.com.", "error");
   } else {
-    showMsg("L'envoi du code a échoué. Réessayez dans un instant.", "error");
+    showMsg("L'envoi du code a échoué (" + (r.code || 'erreur') + "). Réessayez dans un instant ou écrivez à contact@aidytag.com.", "error");
   }
 }
 
-function renvoyerCode(){ if(compteEnAttente) envoyerCodeInscription(false); }
+async function renvoyerCode(){
+  if(!compteEnAttente) return;
+  const btn = document.getElementById('resend-btn');
+  btn.disabled = true;
+  btn.textContent = 'Envoi en cours…';
+  document.getElementById('msg').classList.remove('show');
+  await envoyerCodeInscription(false);
+  if(!btn._timer || btn.textContent === 'Envoi en cours…'){ btn.disabled = false; btn.textContent = 'Renvoyer le code'; }
+}
 
 async function validerCode(e){
   e.preventDefault();
