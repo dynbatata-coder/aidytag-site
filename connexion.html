@@ -167,6 +167,10 @@
   .submit-btn:hover{ background: #4fd382; transform: translateY(-1px); }
   .submit-btn:active{ transform: translateY(0); }
 
+  .link-btn{ background:none; border:0; color: var(--green-light, #6EE7B7); font-family: Arial, sans-serif; font-size:.88rem; font-weight:600; cursor:pointer; align-self:center; padding:4px; }
+  .link-btn:disabled{ opacity:.5; cursor:default; }
+  .form-intro{ font-family: Arial, sans-serif; font-size:.92rem; line-height:1.6; color: rgba(255,255,255,0.78); margin:0; }
+  .code-input{ text-align:center; font-size:1.6rem !important; letter-spacing:.5em; font-weight:700; }
   .form-note{
     font-family: Arial, sans-serif; font-size: 0.82rem; color: var(--gray);
     text-align:center; margin-top: 6px;
@@ -266,8 +270,51 @@
         <label for="login-password">Mot de passe</label>
         <input type="password" id="login-password" placeholder="••••••••" required>
       </div>
-      <button type="submit" class="submit-btn">Se connecter</button>
+      <button type="submit" class="submit-btn" data-label="Se connecter">Se connecter</button>
+      <button type="button" class="link-btn" onclick="ouvrirOubli()">Mot de passe oublié ?</button>
       <p class="form-note">Espace réservé éleveurs, vétérinaires et autorités</p>
+    </form>
+
+    <!-- Confirmation de l'adresse e-mail (inscription) -->
+    <form id="code-form" onsubmit="return validerCode(event)">
+      <p class="form-intro">Un code à 6 chiffres vient d'être envoyé à <strong id="code-email"></strong>. Il est valable 10 minutes.</p>
+      <div class="field">
+        <label for="code-input">Code de vérification</label>
+        <input type="text" id="code-input" class="code-input" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" placeholder="••••••" required>
+      </div>
+      <button type="submit" class="submit-btn" data-label="Valider mon compte">Valider mon compte</button>
+      <button type="button" class="link-btn" id="resend-btn" onclick="renvoyerCode()">Renvoyer le code</button>
+      <p class="form-note">Pensez à vérifier vos courriers indésirables (spam).</p>
+    </form>
+
+    <!-- Mot de passe oublié : étape 1 -->
+    <form id="forgot-form" onsubmit="return demanderReinit(event)">
+      <p class="form-intro">Indiquez l'adresse e-mail de votre compte : nous vous enverrons un code pour choisir un nouveau mot de passe.</p>
+      <div class="field">
+        <label for="forgot-email">Adresse e-mail</label>
+        <input type="email" id="forgot-email" placeholder="vous@exemple.com" required>
+      </div>
+      <button type="submit" class="submit-btn" data-label="Recevoir un code">Recevoir un code</button>
+      <button type="button" class="link-btn" onclick="switchTab('login')">← Retour à la connexion</button>
+    </form>
+
+    <!-- Mot de passe oublié : étape 2 -->
+    <form id="reset-form" onsubmit="return confirmerReinit(event)">
+      <p class="form-intro">Si un compte existe pour <strong id="reset-email"></strong>, un code à 6 chiffres vient d'y être envoyé (valable 10 minutes).</p>
+      <div class="field">
+        <label for="reset-code">Code reçu par e-mail</label>
+        <input type="text" id="reset-code" class="code-input" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" placeholder="••••••" required>
+      </div>
+      <div class="field">
+        <label for="reset-password">Nouveau mot de passe</label>
+        <input type="password" id="reset-password" placeholder="6 caractères minimum" minlength="6" required autocomplete="new-password">
+      </div>
+      <div class="field">
+        <label for="reset-password2">Confirmez le mot de passe</label>
+        <input type="password" id="reset-password2" placeholder="Retapez le mot de passe" minlength="6" required autocomplete="new-password">
+      </div>
+      <button type="submit" class="submit-btn" data-label="Changer mon mot de passe">Changer mon mot de passe</button>
+      <button type="button" class="link-btn" id="reset-resend-btn" onclick="renvoyerReinit()">Renvoyer le code</button>
     </form>
 
     <form id="signup-form" onsubmit="return handleSignup(event)">
@@ -295,7 +342,7 @@
         <label for="signup-password">Mot de passe</label>
         <input type="password" id="signup-password" placeholder="8 caractères minimum" required minlength="8">
       </div>
-      <button type="submit" class="submit-btn">Créer mon compte</button>
+      <button type="submit" class="submit-btn" data-label="Créer mon compte">Créer mon compte</button>
       <p class="form-note">Votre compte sera vérifié avant activation</p>
     </form>
   </div>
@@ -334,15 +381,46 @@ function setLoading(form, loading){
   const btn = form.querySelector('.submit-btn');
   btn.disabled = loading;
   btn.style.opacity = loading ? 0.6 : 1;
-  btn.textContent = loading
-    ? '...'
-    : (form.id === 'login-form' ? 'Se connecter' : 'Créer mon compte');
+  btn.textContent = loading ? '...' : (btn.dataset.label || btn.textContent);
 }
+
+function afficherFormulaire(id){
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('form').forEach(f => f.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// Appel d'une fonction serveur AidyTag : renvoie toujours un objet { success, code, ... }
+async function appelFonction(nom, body){
+  const { data, error } = await sb.functions.invoke(nom, { body });
+  if(!error) return data || { success:false };
+  try { return await error.context.json(); } catch(_) { return { success:false, code:'RESEAU' }; }
+}
+
+function destinationSelonRole(role){
+  return role === 'veto' ? '/espace-veterinaire' : '/espace-eleveur';
+}
+
+// Compte à rebours sur un bouton « Renvoyer le code »
+function demarrerAttente(btnId, secondes){
+  const btn = document.getElementById(btnId);
+  let reste = secondes;
+  btn.disabled = true;
+  btn.textContent = `Renvoyer le code (${reste} s)`;
+  clearInterval(btn._timer);
+  btn._timer = setInterval(() => {
+    reste--;
+    if(reste <= 0){ clearInterval(btn._timer); btn.disabled = false; btn.textContent = 'Renvoyer le code'; }
+    else btn.textContent = `Renvoyer le code (${reste} s)`;
+  }, 1000);
+}
+
+let compteEnAttente = null; // { email, nom, role }
 
 async function handleLogin(e){
   e.preventDefault();
   const form = document.getElementById('login-form');
-  const email = document.getElementById('login-email').value.trim();
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
   const password = document.getElementById('login-password').value;
 
   setLoading(form, true);
@@ -354,18 +432,124 @@ async function handleLogin(e){
     return false;
   }
 
-  // Redirection selon le rôle (même logique que l'app Flutter)
   const { data: profil } = await sb
     .from('eleveurs')
-    .select('role')
-    .eq('email', email)
+    .select('role, nom_complet, code_confirme')
+    .eq('auth_user_id', data.user.id)
     .maybeSingle();
 
-  const role = profil?.role || 'eleveur';
-  const destination = role === 'veto' ? '/espace-veterinaire' : '/espace-eleveur';
+  // Même règle que l'appli : un compte avec email doit être confirmé par code.
+  if(profil && profil.code_confirme !== true && !email.endsWith('@aidytag.app')){
+    compteEnAttente = { email, nom: profil.nom_complet, role: profil.role };
+    await envoyerCodeInscription(true);
+    return false;
+  }
 
   showMsg("Connexion réussie. Redirection...", "success");
-  setTimeout(() => { window.location.href = destination; }, 900);
+  setTimeout(() => { window.location.href = destinationSelonRole(profil?.role); }, 900);
+  return false;
+}
+
+async function envoyerCodeInscription(premierEnvoi){
+  const r = await appelFonction('send-signup-code', { email: compteEnAttente.email, nom: compteEnAttente.nom });
+  document.getElementById('code-email').textContent = compteEnAttente.email;
+  afficherFormulaire('code-form');
+  if(r.success && r.code === 'ALREADY_CONFIRMED'){
+    window.location.href = destinationSelonRole(compteEnAttente.role);
+    return;
+  }
+  if(r.success){
+    showMsg(premierEnvoi ? "Vérifiez votre boîte e-mail pour confirmer votre compte." : "Un nouveau code vient d'être envoyé.", "success");
+    demarrerAttente('resend-btn', 60);
+  } else if(r.code === 'TROP_TOT'){
+    showMsg("Un code vous a déjà été envoyé il y a moins d'une minute.", "error");
+    demarrerAttente('resend-btn', r.retry_after || 60);
+  } else if(r.code === 'TROP_DE_DEMANDES'){
+    showMsg("Trop de codes demandés. Réessayez dans une heure ou contactez contact@aidytag.com.", "error");
+  } else {
+    showMsg("L'envoi du code a échoué. Réessayez dans un instant.", "error");
+  }
+}
+
+function renvoyerCode(){ if(compteEnAttente) envoyerCodeInscription(false); }
+
+async function validerCode(e){
+  e.preventDefault();
+  const form = document.getElementById('code-form');
+  const code = document.getElementById('code-input').value.trim();
+  if(!/^\d{6}$/.test(code)){ showMsg("Le code contient 6 chiffres.", "error"); return false; }
+
+  setLoading(form, true);
+  const { data: ok, error } = await sb.rpc('aidytag_confirmer_code', { p_code: code });
+  setLoading(form, false);
+
+  if(error || ok !== true){
+    showMsg("Code incorrect ou expiré. Vérifiez le dernier e-mail reçu, ou demandez un nouveau code.", "error");
+    return false;
+  }
+  // Email de bienvenue (le serveur vérifie qu'il n'a pas déjà été envoyé)
+  await appelFonction('aidytag-emails', { type: 'bienvenue' });
+  showMsg("Compte confirmé ! Bienvenue sur AidyTag. Redirection...", "success");
+  setTimeout(() => { window.location.href = destinationSelonRole(compteEnAttente?.role); }, 1200);
+  return false;
+}
+
+// ---------- Mot de passe oublié ----------
+let emailReinit = '';
+
+function ouvrirOubli(){
+  document.getElementById('forgot-email').value = document.getElementById('login-email').value.trim();
+  document.getElementById('msg').classList.remove('show');
+  afficherFormulaire('forgot-form');
+}
+
+async function demanderReinit(e){
+  if(e) e.preventDefault();
+  const form = document.getElementById('forgot-form');
+  emailReinit = document.getElementById('forgot-email').value.trim().toLowerCase();
+  setLoading(form, true);
+  const r = await appelFonction('aidytag-mot-de-passe', { action: 'demander', email: emailReinit });
+  setLoading(form, false);
+  if(!r.success && r.code === 'EMAIL_INVALIDE'){ showMsg("Adresse e-mail invalide.", "error"); return false; }
+  if(!r.success){ showMsg("Service momentanément indisponible. Réessayez dans un instant.", "error"); return false; }
+  document.getElementById('reset-email').textContent = emailReinit;
+  afficherFormulaire('reset-form');
+  showMsg("Consultez votre boîte e-mail (et les spams).", "success");
+  demarrerAttente('reset-resend-btn', 60);
+  return false;
+}
+
+async function renvoyerReinit(){
+  const r = await appelFonction('aidytag-mot-de-passe', { action: 'demander', email: emailReinit });
+  if(r.success){ showMsg("Si un compte existe, un nouveau code vient d'être envoyé.", "success"); demarrerAttente('reset-resend-btn', 60); }
+  else showMsg("Service momentanément indisponible. Réessayez dans un instant.", "error");
+}
+
+async function confirmerReinit(e){
+  e.preventDefault();
+  const form = document.getElementById('reset-form');
+  const code = document.getElementById('reset-code').value.trim();
+  const mdp = document.getElementById('reset-password').value;
+  const mdp2 = document.getElementById('reset-password2').value;
+  if(mdp !== mdp2){ showMsg("Les deux mots de passe ne correspondent pas.", "error"); return false; }
+
+  setLoading(form, true);
+  const r = await appelFonction('aidytag-mot-de-passe', { action: 'confirmer', email: emailReinit, code, nouveau_mot_de_passe: mdp });
+  setLoading(form, false);
+
+  if(r.success){
+    form.reset();
+    document.getElementById('login-email').value = emailReinit;
+    switchTab('login');
+    showMsg("Mot de passe modifié. Vous pouvez vous connecter.", "success");
+  } else if(r.code === 'MOT_DE_PASSE_TROP_COURT'){
+    showMsg("Le mot de passe doit contenir au moins 6 caractères.", "error");
+  } else if(r.code === 'CODE_INCORRECT_OU_EXPIRE'){
+    const reste = (typeof r.essais_restants === 'number') ? ` (${r.essais_restants} essai(s) restant(s))` : '';
+    showMsg("Code incorrect ou expiré" + reste + ". Demandez un nouveau code si besoin.", "error");
+  } else {
+    showMsg("Le changement a échoué. Réessayez dans un instant.", "error");
+  }
   return false;
 }
 
@@ -403,12 +587,16 @@ async function handleSignup(e){
     return false;
   }
 
-  showMsg(
-    "Compte créé avec succès ! Votre dossier est en cours de vérification. " +
-    "S'il manque des documents (carte Fellah, carte nationale), nous vous recontacterons directement par téléphone ou email pour les compléter.",
-    "success"
-  );
   form.reset();
+  compteEnAttente = { email: email.toLowerCase(), nom, role };
+
+  if(authData && authData.session){
+    // Compte créé et connecté : on envoie le code de confirmation.
+    await envoyerCodeInscription(true);
+  } else {
+    switchTab('login');
+    showMsg("Compte créé ! Consultez votre boîte e-mail pour le confirmer, puis connectez-vous.", "success");
+  }
   return false;
 }
 
