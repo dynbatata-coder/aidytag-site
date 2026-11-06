@@ -270,8 +270,8 @@
 
     <form id="login-form" class="active" onsubmit="return handleLogin(event)">
       <div class="field">
-        <label for="login-email">Adresse e-mail</label>
-        <input type="email" id="login-email" placeholder="vous@exemple.com" required>
+        <label for="login-email">Téléphone ou adresse e-mail</label>
+        <input type="text" id="login-email" placeholder="05 XX XX XX XX ou vous@exemple.com" autocomplete="username" required>
       </div>
       <div class="field">
         <label for="login-password">Mot de passe</label>
@@ -296,7 +296,7 @@
 
     <!-- Mot de passe oublié : étape 1 -->
     <form id="forgot-form" onsubmit="return demanderReinit(event)">
-      <p class="form-intro">Indiquez l'adresse e-mail de votre compte : nous vous enverrons un code pour choisir un nouveau mot de passe.</p>
+      <p class="form-intro">Indiquez l'adresse e-mail de votre compte : nous vous enverrons un code pour choisir un nouveau mot de passe.<br><small>Compte créé avec un numéro de téléphone ? Contactez-nous au 05 64 47 51 00 ou à contact@aidytag.com.</small></p>
       <div class="field">
         <label for="forgot-email">Adresse e-mail</label>
         <input type="email" id="forgot-email" placeholder="vous@exemple.com" required>
@@ -427,8 +427,14 @@ let compteEnAttente = null; // { email, nom, role }
 async function handleLogin(e){
   e.preventDefault();
   const form = document.getElementById('login-form');
-  const email = document.getElementById('login-email').value.trim().toLowerCase();
+  const identifiant = document.getElementById('login-email').value.trim().toLowerCase();
   const password = document.getElementById('login-password').value;
+  // Même règle que l'appli : un numéro de téléphone correspond au compte interne <chiffres>@aidytag.app
+  const email = identifiant.includes('@') ? identifiant : identifiant.replace(/\D/g, '') + '@aidytag.app';
+  if(!identifiant.includes('@') && identifiant.replace(/\D/g, '').length < 9){
+    showMsg("Numéro de téléphone incomplet.", "error");
+    return false;
+  }
 
   setLoading(form, true);
   const { data, error } = await sb.auth.signInWithPassword({ email, password });
@@ -513,7 +519,8 @@ async function validerCode(e){
 let emailReinit = '';
 
 function ouvrirOubli(){
-  document.getElementById('forgot-email').value = document.getElementById('login-email').value.trim();
+  const idf = document.getElementById('login-email').value.trim();
+  document.getElementById('forgot-email').value = idf.includes('@') ? idf : '';
   document.getElementById('msg').classList.remove('show');
   afficherFormulaire('forgot-form');
 }
@@ -641,7 +648,7 @@ async function handleSignup(e){
 })();
 
 function translateError(msg){
-  if(msg.includes("Invalid login credentials")) return "email ou mot de passe incorrect.";
+  if(msg.includes("Invalid login credentials")) return "téléphone / e-mail ou mot de passe incorrect.";
   if(msg.includes("User already registered")) return "un compte existe déjà avec cet email. Utilisez l'onglet « Connexion » (ou « Mot de passe oublié ? » si besoin).";
   if(msg.includes("Password should be")) return "le mot de passe doit contenir au moins 8 caractères.";
   return msg;
