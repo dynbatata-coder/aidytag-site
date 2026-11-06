@@ -610,7 +610,7 @@ async function handleSignup(e){
 
 function translateError(msg){
   if(msg.includes("Invalid login credentials")) return "email ou mot de passe incorrect.";
-  if(msg.includes("User already registered")) return "un compte existe déjà avec cet email.";
+  if(msg.includes("User already registered")) return "un compte existe déjà avec cet email. Utilisez l'onglet « Connexion » (ou « Mot de passe oublié ? » si besoin).";
   if(msg.includes("Password should be")) return "le mot de passe doit contenir au moins 8 caractères.";
   return msg;
 }
