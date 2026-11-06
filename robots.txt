@@ -1,4 +1,8 @@
 User-agent: *
 Allow: /
+Disallow: /connexion
+Disallow: /espace-eleveur
+Disallow: /espace-veterinaire
+Disallow: /downloads/
 
-Sitemap: https://aidytag.com/sitemap.xml
+Sitemap: https://www.aidytag.com/sitemap.xml

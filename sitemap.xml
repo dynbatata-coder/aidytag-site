@@ -1,12 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://aidytag.com/</loc>
+    <loc>https://www.aidytag.com/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://aidytag.com/apropos.html</loc>
+    <loc>https://www.aidytag.com/apropos</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.aidytag.com/demo</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
